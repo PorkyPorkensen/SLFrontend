@@ -53,7 +53,7 @@ const PortfolioPieChart = ({ tokens, prices }) => {
             ))}
           </Pie>
           <Tooltip />
-          <Legend verticalAlign="bottom" height={60} wrapperStyle={{ fontSize: '0.8rem', paddingTop: '20px' }} />
+          <Legend verticalAlign="bottom" height={60} wrapperStyle={{ fontSize: '0.8rem', padding: '20px' }} />
         </PieChart>
       </ResponsiveContainer>
     </div>
