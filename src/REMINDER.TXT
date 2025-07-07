@@ -1,0 +1,13 @@
+BIO (add limitations)
+ADD FOOTER
+LOGO/HEADER AREA
+FIND NEW FONT
+BACKGROUND OF OTHER COIN AREA
+CLICK ON COIN -> MODAL WHERE U CAN BE LINKED TO BIRDEYE/TV/RAY TO TRADE?
+ANIMATIONS ON LOTTIE?
+DESKTOP/TABLET STYLING
+GRAPHS
+Loading state (lottie)
+seems to be a bug with 3 line titles (pudgy)
+make big numbers look cleaner
+batching tokens
