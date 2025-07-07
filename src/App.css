@@ -40,6 +40,36 @@ body::before {
 }
 
 
+.logo {
+    font-family: 'Orbitron', 'Audiowide', 'sans-serif';
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #00FFA3;
+  text-shadow:
+    0 0 5px #00FFA3,
+    0 0 10px #00FFA3,
+    0 0 20px #00FFA3,
+    0 0 40px #9945FF;
+  animation: flicker 2s infinite;
+  margin: 2rem 0;
+  text-align: center;
+}
+
+@keyframes flicker {
+  0%, 18%, 22%, 25%, 53%, 57%, 100% {
+    opacity: 1;
+  }
+  20%, 24%, 55% {
+    opacity: 0.4;
+  }
+}
+
+.searchBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 h1, h2, h3, button {
   font-family: 'orbitron', monospace;
   text-transform: uppercase;
@@ -53,6 +83,14 @@ h1 {
 a {
   color: inherit;
 }
+
+.chartDiv {
+    background-color: #080808cb;
+     border: 2px solid #00FFA3;
+    box-shadow: 0 0 10px #00ffa3, 0 0 20px #9945ff66;
+    border-radius: 16px;
+}
+
 
 .coinContainer { 
   display: flex ;
@@ -160,6 +198,19 @@ a {
   text-align: center;
   height: 350px;
 }
+
+.loadingWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 3rem auto;
+  width: 350px;
+  background: #000000ab;
+  box-shadow: 0 0 10px #00ffa3, 0 0 20px #9945ff66;
+  border: 1px solid #00FFA3;
+  border-radius: 16px;
+}
+
 .coinLogo { 
   height: 60px;
   width: 60px;
@@ -221,6 +272,12 @@ a {
   cursor: pointer;
 }
 
+
+@media (max-width: 600px) {
+  .recharts-legend-wrapper {
+    font-size: 12px !important;
+  }
+}
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);

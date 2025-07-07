@@ -1,6 +1,6 @@
 import React from 'react';
 
-const WalletInput = ({ wallet, setWallet, onTrack }) => {
+const WalletInput = ({ wallet, setWallet, onTrack, isCooldown, cooldownTime }) => {
   return (
     <div className="wallet-input-wrapper">
       <input
@@ -9,9 +9,13 @@ const WalletInput = ({ wallet, setWallet, onTrack }) => {
         value={wallet}
         onChange={(e) => setWallet(e.target.value)}
       />
-      <button onClick={onTrack} className="searchBtn">
-        Track
-      </button>
+<button
+  onClick={onTrack}
+  className="searchBtn"
+  disabled={isCooldown}
+>
+  {isCooldown ? `Cooldown: ${cooldownTime}s` : 'Track'}
+</button>
     </div>
   );
 };

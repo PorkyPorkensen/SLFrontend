@@ -9,7 +9,8 @@ import WalletInput from './components/WalletInput';
 import TokenList from './components/TokenList';
 import TokenModal from './components/TokenModal';
 import UnknownTokens from './components/UnknownTokens';
-
+import LoadingSpinner from './components/LoadingSpinner';
+import PortfolioPieChart from './components/PortfolioPieChart';
 
 function App() {
   const [wallet, setWallet] = React.useState('');
@@ -20,6 +21,9 @@ function App() {
   const [unknownRemaining, setUnknownRemaining] = React.useState([]);
   const [showUnknownDetails, setShowUnknownDetails] = React.useState(false);
   const [selectedToken, setSelectedToken] = React.useState(null);
+  const [loading, setLoading] = React.useState(false);
+  const [isCooldown, setIsCooldown] = React.useState(false);
+  const [cooldownTime, setCooldownTime] = React.useState(60);
 
   React.useEffect(() => {
     new TokenListProvider().resolve().then((container) => {
@@ -27,6 +31,19 @@ function App() {
       setTokenList(list);
     });
   }, []);
+
+  React.useEffect(() => {
+    let timer;
+    if (isCooldown && cooldownTime > 0) {
+      timer = setTimeout(() => {
+        setCooldownTime((prev) => prev - 1);
+      }, 1000);
+    } else if (cooldownTime === 0) {
+      setIsCooldown(false);
+    }
+
+    return () => clearTimeout(timer);
+  }, [isCooldown, cooldownTime]);
 
   const getSolPrice = async () => {
     try {
@@ -58,6 +75,7 @@ function App() {
   };
 
   const fetchTokens = async () => {
+    setLoading(true);
     try {
       const connection = new Connection("https://rpc.helius.xyz/?api-key=258cae47-7300-44bb-be88-1182416282c5");
       const publicKey = new PublicKey(wallet);
@@ -74,7 +92,7 @@ function App() {
         logoURI: "https://cryptologos.cc/logos/solana-sol-logo.png?v=032"
       };
 
-     const res = await axios.get(`https://slbackend-0fvj.onrender.com/api/assets/${wallet}`)
+      const res = await axios.get(`https://slbackend-0fvj.onrender.com/api/assets/${wallet}`);
       const rawTokens = res.data;
       const filtered = rawTokens.filter((asset) => Number(asset.amount) > 0);
 
@@ -98,12 +116,25 @@ function App() {
         [solToken.mint]: { usd: solPrice }
       };
 
-      if (mintAddresses.length > 0) {
-        const priceURL = `https://api.coingecko.com/api/v3/simple/token_price/solana?contract_addresses=${mintAddresses.join(',')}&vs_currencies=usd&x_cg_demo_api_key=CG-J7MsjScDMvuF8hC1zDL88zyt`;
-        const priceRes = await axios.get(priceURL);
-        priceData = { ...priceData, ...priceRes.data };
-        setPrices(priceData);
+      const BATCH_SIZE = 60;
+      const batches = [];
+
+      for (let i = 0; i < mintAddresses.length; i += BATCH_SIZE) {
+        const chunk = mintAddresses.slice(i, i + BATCH_SIZE);
+        batches.push(chunk);
       }
+
+      for (const batch of batches) {
+        try {
+          const priceURL = `https://api.coingecko.com/api/v3/simple/token_price/solana?contract_addresses=${batch.join(',')}&vs_currencies=usd&x_cg_demo_api_key=CG-J7MsjScDMvuF8hC1zDL88zyt`;
+          const response = await axios.get(priceURL);
+          priceData = { ...priceData, ...response.data };
+        } catch (err) {
+          console.error("Price batch fetch failed:", err);
+        }
+      }
+
+      setPrices(priceData);
 
       const sortedUnknowns = [...unknownTokens].sort((a, b) => {
         const pa = priceData[a.mint]?.usd || 0;
@@ -131,24 +162,44 @@ function App() {
         const amount = Number(token.amount) / 10 ** token.decimals;
         return sum + (price * amount);
       }, 0);
-      setTotalValue(total);
 
-      setTokens(finalKnownTokens);
-      setUnknownRemaining(sortedUnknowns.slice(12));
-    } catch (err) {
-      console.error(err);
-    }
-  };
+      const filteredFinalTokens = finalKnownTokens.filter((token) => {
+        const amount = Number(token.amount) / 10 ** token.decimals;
+        const price = priceData[token.mint]?.usd || 0;
+        const value = amount * price;
+        return value >= 1;
+      });
+
+      setTotalValue(total);
+      setTokens(filteredFinalTokens);
+      setUnknownRemaining(
+        sortedUnknowns.slice(12).filter((token) => {
+          const amount = Number(token.amount) / 10 ** token.decimals;
+          const price = priceData[token.mint]?.usd || 0;
+          const value = amount * price;
+          return value >= 1;
+        })
+      );
+            setIsCooldown(true);
+            setCooldownTime(60);
+          } catch (err) {
+            console.error(err);
+          } finally {
+            setLoading(false);
+          }
+        };
 
   return (
     <div>
-      <h1>Solana Lookup</h1>
+      <h1 className="logo">SolScanner</h1>
       <AboutSection />
       <ExampleWallet />
       <WalletInput
         wallet={wallet}
         setWallet={setWallet}
         onTrack={fetchTokens}
+        isCooldown={isCooldown}
+        cooldownTime={cooldownTime}
       />
       <div className="pv">
         <h3>Estimated Value:</h3>
@@ -156,23 +207,23 @@ function App() {
           ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </h2>
       </div>
-    <TokenList
-      tokens={tokens}
-      prices={prices}
-      onTokenClick={setSelectedToken}
-    />
-    <TokenModal
-      token={selectedToken}
-      onClose={() => setSelectedToken(null)}
-      prices={prices}
-    />
-    <UnknownTokens
-      tokens={unknownRemaining}
-      prices={prices}
-      show={showUnknownDetails}
-      onToggle={() => setShowUnknownDetails(prev => !prev)}
-      wallet={wallet}
-    />
+
+      {loading ? (
+        <LoadingSpinner />
+      ) : (
+        <>
+          <PortfolioPieChart tokens={tokens} prices={prices} />
+          <TokenList tokens={tokens} prices={prices} onTokenClick={setSelectedToken} />
+          <TokenModal token={selectedToken} onClose={() => setSelectedToken(null)} prices={prices} />
+          <UnknownTokens
+            tokens={unknownRemaining}
+            prices={prices}
+            show={showUnknownDetails}
+            onToggle={() => setShowUnknownDetails(prev => !prev)}
+            wallet={wallet}
+          />
+        </>
+      )}
     </div>
   );
 }
