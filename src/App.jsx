@@ -74,7 +74,7 @@ function App() {
         logoURI: "https://cryptologos.cc/logos/solana-sol-logo.png?v=032"
       };
 
-      const res = await axios.get(`http://localhost:5000/api/assets/${wallet}`);
+     const res = await axios.get(`https://slbackend-0fvj.onrender.com/api/assets/${wallet}`)
       const rawTokens = res.data;
       const filtered = rawTokens.filter((asset) => Number(asset.amount) > 0);
 
