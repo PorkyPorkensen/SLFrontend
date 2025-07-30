@@ -277,6 +277,18 @@ a {
   .recharts-legend-wrapper {
     font-size: 12px !important;
   }
+
+
+}
+
+@media (min-width: 600px) {
+  .abt {
+    width: 90%;
+    max-width: 750px;
+    padding: 2rem;
+    line-height: 1.8em;
+  }
+  
 }
 @keyframes App-logo-spin {
   from {
